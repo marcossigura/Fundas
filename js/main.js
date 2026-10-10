@@ -1,120 +1,173 @@
-class Persona {
-   constructor(nombre, apellido, sexo, edad){
-      this.nombre = nombre;
-      this.apellido = apellido;
-      this.sexo = sexo;
-      this.edad = edad;
-   }
-
-   obtenerNombreCompleto(){
-      return this.nombre + " " + this.apellido;
-   }
-
-   clasificarEdad(){
-      if(this.edad <= 17){
-         return "niño/adolescente";
-      } else if(this.edad <= 59){
-         return "adulto";
-      } else {
-         return "adulto mayor";
-      }
-   }
-
-   verificarJubilacion(){
-      if(this.edad >= 60 && this.sexo == "femenino"){
-         return "puede jubilarse";
-      } else if(this.edad >= 65 && this.sexo == "masculino"){
-         return "puede jubilarse";
-      } else {
-         return "no puede jubilarse";
-      }
-   }
-
-   calcularAños(){
-      if(this.edad < 60 && this.sexo == "femenino"){
-         return 60 - this.edad;
-      } else if(this.edad < 65 && this.sexo == "masculino"){
-         return 65 - this.edad;
-      }
+class Funda {
+   constructor(modelo, color, precio, stock){
+      this.modelo = modelo;
+      this.color = color;
+      this.precio = precio;
+      this.stock = stock;
    }
 }
 
-const mostrarResultado = (persona, categoria, jubilacion, años) => {
-   if(persona.edad<60 && persona.sexo=="femenino" || persona.edad<65 && persona.sexo=="masculino"){
-      console.log(
-         "Nombre: " + persona.nombre + "\n" +
-         "Apellido: " + persona.apellido + "\n" +
-         "Sexo: " + persona.sexo + "\n" +
-         "Edad: " + persona.edad + "\n" +
-         "Categoria: " + categoria + "\n" +
-         "Jubilacion: " + jubilacion + "\n" +
-         "Años faltantes para jubilarte: " + años
-      );
+const funda1 = new Funda("iPhone 13", "Negro", 8000, 10);
+const funda2 = new Funda("iPhone 14", "Transparente", 7000, 8);
+const funda3 = new Funda("iPhone 15", "Azul", 8000, 5);
+
+const catalogo = [funda1, funda2, funda3];
+const pedidosRegistrados = ["Laura - iPhone 13 x1", "Nicolás - iPhone 14 x2", "Marta - iPhone 15 x1", "Juan - iPhone 13 x3", "Carla - iPhone 14 x1"];
+
+function mostrarCatalogo(){
+   console.log("--- Catálogo ---");
+   for(const funda of catalogo){
+      console.log(funda.modelo + " (" + funda.color + ") $" + funda.precio + " | stock: " + funda.stock);
+   }
+}
+
+function buscarFunda(modelo){
+   return catalogo.find(funda => funda.modelo.toLowerCase() == modelo.toLowerCase());
+}
+
+function fundasConStock(){
+   return catalogo.filter(funda => funda.stock > 0);
+}
+
+function fundasHastaPrecio(precioMaximo){
+   return catalogo.filter(funda => funda.precio <= precioMaximo);
+}
+
+function preciosConDescuento(porcentaje){
+   return catalogo.map(funda => funda.modelo + ": $" + funda.precio * (1 - porcentaje / 100));
+}
+
+function hayStock(funda, cantidad){
+   if(cantidad > 0 && funda.stock >= cantidad){
+      return true;
    } else {
-      console.log(
-         "Nombre: " + persona.nombre + "\n" +
-         "Apellido: " + persona.apellido + "\n" +
-         "Sexo: " + persona.sexo + "\n" +
-         "Edad: " + persona.edad + "\n" +
-         "Categoria: " + categoria + "\n" +
-         "Jubilacion: " + jubilacion
-      );
+      return false;
    }
-};
+}
 
-const personasRegistradas = ["Laura Gómez", "Nicolás Pérez", "Marta Díaz", "Juan Gimenez", "Carla Ruiz"];
-
-function listarRegistrados(personasRegistradas){
-   console.log("Personas registradas");
-   for(const persona of personasRegistradas){
-      console.log("Persona:" + persona);
+function calcularTotal(funda, cantidad){
+   let total = funda.precio * cantidad;
+   if(cantidad >= 3){
+      total = total * 0.9; 
    }
+   return total;
+}
+
+function venderFunda(funda, cantidad){
+   funda.stock = funda.stock - cantidad;
+}
+
+function listarPedidos(pedidosRegistrados){
+   console.log("--- Pedidos registrados ---");
+   for(const pedido of pedidosRegistrados){
+      console.log("Pedido: " + pedido);
+   }
+}
+
+function mostrarFundas(lista){
+   for(const funda of lista){
+      console.log(funda.modelo + " (" + funda.color + ") $" + funda.precio + " | stock: " + funda.stock);
+   }
+}
+
+mostrarCatalogo();
+
+const menu = 
+"¿Qué querés consultar?\n" +
+"1 - Ver fundas con stock\n" +
+"2 - Ver fundas hasta un precio\n" +
+"3 - Ver precios con descuento\n" +
+"4 - Salir";
+
+let opcion = prompt(menu);
+
+while(opcion != "4"){
+
+   switch(opcion){
+
+      case "1":
+         console.log("--- Fundas con stock ---");
+         mostrarFundas(fundasConStock());
+         break;
+
+      case "2":
+         const precioMaximo = parseInt(prompt("¿Cuál es el precio máximo?"));
+         console.log("--- Fundas hasta $" + precioMaximo + " ---");
+         mostrarFundas(fundasHastaPrecio(precioMaximo));
+         break;
+
+      case "3":
+         const porcentaje = parseInt(prompt("¿Qué porcentaje de descuento querés ver?"));
+         console.log("--- Precios con " + porcentaje + "% de descuento ---");
+
+         for(const precio of preciosConDescuento(porcentaje)){
+            console.log(precio);
+         }
+         break;
+
+      default:
+         console.log("Opción inválida");
+      break;
+   }
+
+   opcion = prompt(menu);  
 }
 
 let continuar = "si";
 while(continuar == "si"){
 
-   let nombre = prompt("Ingrese su nombre: ");
-   let apellido = prompt("Ingrese su apellido: ");
-   let sexo = prompt("Ingrese su sexo (Masculino o Femenino): ").toLowerCase();
-   let edad = parseInt(prompt("Ingrese su edad:"));
+   const cliente = prompt("Nombre del cliente:");
 
-   const persona = new Persona(nombre, apellido, sexo, edad);
+   const modeloPedido = prompt("¿Qué modelo de funda quiere? (ej: iPhone 13)");
+   const funda = buscarFunda(modeloPedido);
 
-   const categoria = persona.clasificarEdad();
-   const jubilacion = persona.verificarJubilacion();
-   const años = persona.calcularAños();
-
-   mostrarResultado(persona, categoria, jubilacion, años);
-
-   if(jubilacion == "puede jubilarse"){
-      personasRegistradas.unshift(persona.obtenerNombreCompleto());
+   if(funda == null){
+      alert("No tenemos fundas para " + modeloPedido);
    } else {
-      personasRegistradas.push(persona.obtenerNombreCompleto());
+      const cantidad = parseInt(prompt("¿Cuántas fundas quiere?"));
+
+      if(hayStock(funda, cantidad)){
+         const total = calcularTotal(funda, cantidad);
+         venderFunda(funda, cantidad);
+         console.log("Venta a " + cliente + ": " + cantidad + " x " + funda.modelo + " = $" + total);
+
+         const express = prompt("¿Es envío express? (si o no)").toLowerCase();
+         const pedido = cliente + " - " + funda.modelo + " x" + cantidad;
+
+         if(express == "si"){
+            pedidosRegistrados.unshift(pedido);
+         } else {
+            pedidosRegistrados.push(pedido);
+         }
+      } else {
+         alert("Stock insuficiente de " + funda.modelo + " (quedan " + funda.stock + ")");
+      }
    }
 
-   continuar = prompt("¿Desea cargar a otra persona (si o no)?").toLowerCase();
+   continuar = prompt("¿Desea cargar otro pedido? (si o no)").toLowerCase();
 }
 
-listarRegistrados(personasRegistradas);
+listarPedidos(pedidosRegistrados);
 
-const corregir = prompt("¿Alguna persona escribió mal su nombre y querés corregirlo? (si o no)").toLowerCase();
+const corregir = prompt("¿Querés corregir el nombre de algún pedido? (si o no)").toLowerCase();
 if(corregir == "si"){
 
-   const nombreACorregir = prompt("Ingresá el nombre (tal cual está escrito) que querés corregir:");
-   if(personasRegistradas.includes(nombreACorregir)){
+   const pedidoACorregir = prompt("Ingresá el pedido (tal cual está escrito) que querés corregir:");
+   if(pedidosRegistrados.includes(pedidoACorregir)){
 
-      const posicion=personasRegistradas.indexOf(nombreACorregir);
-      const nombreCorregido=prompt("Ingresá el nombre corregido:");
+      const posicion = pedidosRegistrados.indexOf(pedidoACorregir);
+      const pedidoCorregido = prompt("Ingresá el pedido corregido:");
 
-      personasRegistradas.splice(posicion,1,nombreCorregido);
-      console.log("Nombre corregido. Registro actualizado:");
+      pedidosRegistrados.splice(posicion, 1, pedidoCorregido);
+      console.log("Pedido corregido en la posición " + posicion + ". Registro actualizado:");
 
-      listarRegistrados(personasRegistradas);
-   }else{
-      console.log(nombreACorregir + " no está registrado, no se puede corregir");
+      listarPedidos(pedidosRegistrados);
+   } else {
+      console.log(pedidoACorregir + " no está registrado, no se puede corregir");
    }
-}else{
+} else {
    console.log("No se realizaron correcciones");
 }
+
+mostrarCatalogo();
 
