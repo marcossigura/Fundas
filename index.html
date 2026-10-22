@@ -1,12 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clase 1</title>
-    <script src="./js/main.js" defer></script>
+    <title>Fundas de iPhone</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/main.js" defer></script>
 </head>
 <body>
-   <h1>Introduccion a JavaScript</h1>
+
+    <h1>Fundas de iPhone</h1>
+
+    <section>
+        <h2>Nuevo pedido</h2>
+        <input type="text" id="cliente" placeholder="Nombre del cliente">
+        <select id="funda"></select>
+        <input type="number" id="cantidad" value="1">
+        <button class="btn" id="btn-registrar">Agregar pedido</button>
+        <div id="mensaje"></div>
+    </section>
+
+    <section>
+        <h2>Pedidos</h2>
+        <div id="contenedor-pedidos"></div>
+    </section>
+
+    <section>
+        <h2>Catálogo</h2>
+        <input type="text" id="buscador" placeholder="Buscá por modelo (ej: iPhone 13)">
+        <div id="contenedor-catalogo"></div>
+    </section>
+
 </body>
 </html>

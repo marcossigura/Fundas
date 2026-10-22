@@ -1,0 +1,72 @@
+body {
+  font-family: Arial, sans-serif;
+  background: rgb(238, 240, 247);
+  color: rgb(34, 34, 34);
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+h1 {
+  color: rgb(29, 32, 51);
+}
+
+section {
+  background: rgb(255, 255, 255);
+  padding: 16px;
+  margin-top: 16px;
+  border-radius: 6px;
+}
+
+input, select {
+  padding: 8px;
+  margin: 4px 4px 4px 0;
+}
+
+.btn {
+  background: rgb(79, 107, 237);
+  color: rgb(255, 255, 255);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-cancelar {
+  background: rgb(224, 82, 82);
+}
+
+.exito {
+  background: rgb(214, 245, 227);
+  color: rgb(27, 107, 63);
+  padding: 8px;
+  margin-top: 8px;
+}
+
+.error {
+  background: rgb(253, 224, 224);
+  color: rgb(163, 33, 33);
+  padding: 8px;
+  margin-top: 8px;
+}
+
+.pedido {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ccc;
+}
+
+#contenedor-catalogo {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.tarjeta {
+  border: 2px solid rgb(29, 32, 51);
+  border-radius: 6px;
+  padding: 12px;
+  text-align: center;
+}
