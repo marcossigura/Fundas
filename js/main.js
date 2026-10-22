@@ -7,7 +7,7 @@ class Funda {
       this.stock = stock;
    }
 }
-
+ 
 class Pedido {
    constructor(cliente, funda, cantidad, total){
       this.cliente = cliente;
@@ -16,8 +16,8 @@ class Pedido {
       this.total = total;
    }
 }
-
-const catalogo = [
+ 
+const catalogoInicial = [
    new Funda(1, "iPhone 11", "Negro", 6000, 15),
    new Funda(2, "iPhone 11", "Transparente", 5500, 12),
    new Funda(3, "iPhone 12", "Azul", 6500, 10),
@@ -33,119 +33,138 @@ const catalogo = [
    new Funda(13, "iPhone 15", "Negro", 9000, 5),
    new Funda(14, "iPhone 15", "Transparente", 8000, 10)
 ];
-
-const pedidos = [];
-
-
+ 
+const catalogo = JSON.parse(localStorage.getItem("catalogo")) || catalogoInicial;
+const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+ 
 const inputCliente = document.getElementById("cliente");
 const selectFunda = document.getElementById("funda");
 const inputCantidad = document.getElementById("cantidad");
 const btnRegistrar = document.getElementById("btn-registrar");
+const btnVaciar = document.getElementById("btn-vaciar");
 const mensaje = document.getElementById("mensaje");
 const buscador = document.getElementById("buscador");
 const contenedorCatalogo = document.querySelector("#contenedor-catalogo");
 const contenedorPedidos = document.querySelector("#contenedor-pedidos");
-
-
+ 
+function guardarStorage(){
+   localStorage.setItem("catalogo", JSON.stringify(catalogo));
+   localStorage.setItem("pedidos", JSON.stringify(pedidos));
+}
+ 
 function mostrarMensaje(texto, tipo){
    mensaje.textContent = texto;
    mensaje.className = tipo;
 }
-
-
+ 
 function cargarSelect(){
    let html = "";
-   for(const funda of catalogo){
-      html += `<option value="${funda.id}">${funda.modelo} - ${funda.color} ($${funda.precio})</option>`;
+   for(const { id, modelo, color, precio } of catalogo){
+      html += `<option value="${id}">${modelo} - ${color} ($${precio})</option>`;
    }
    selectFunda.innerHTML = html;
 }
-
+ 
 function renderizarCatalogo(lista){
    let html = "";
-   for(const funda of lista){
+   for(const { modelo, color, precio, stock } of lista){
       html += `
          <div class="tarjeta">
-            <h3>${funda.modelo}</h3>
-            <p>${funda.color}</p>
-            <p>$${funda.precio}</p>
-            <p>Stock: ${funda.stock}</p>
+            <h3>${modelo}</h3>
+            <p>${color}</p>
+            <p>$${precio}</p>
+            <p>${stock > 0 ? "Stock: " + stock : "Sin stock"}</p>
          </div>
       `;
    }
    contenedorCatalogo.innerHTML = html;
 }
-
+ 
 function renderizarPedidos(){
    let html = "";
-   for(const pedido of pedidos){
+   for(const { cliente, cantidad, funda, total } of pedidos){
+      const { modelo, color } = funda;
       html += `
          <div class="pedido">
-            <p>${pedido.cliente}: ${pedido.cantidad} x ${pedido.funda.modelo} (${pedido.funda.color}) = $${pedido.total}</p>
+            <p>${cliente}: ${cantidad} x ${modelo} (${color}) = $${total}</p>
             <button class="btn btn-cancelar">Cancelar</button>
          </div>
       `;
    }
-   contenedorPedidos.innerHTML = html;
-
-  
+   contenedorPedidos.innerHTML = pedidos.length === 0 ? "<p>No hay pedidos todavía</p>" : html;
+ 
    const botones = document.querySelectorAll(".btn-cancelar");
    for(let i = 0; i < botones.length; i++){
       botones[i].addEventListener("click", () => cancelarPedido(i));
    }
 }
-
-
+ 
 function filtrarCatalogo(){
    const texto = buscador.value.toLowerCase();
-   const filtradas = catalogo.filter(funda => funda.modelo.toLowerCase().includes(texto));
+   const filtradas = catalogo.filter(({ modelo }) => modelo.toLowerCase().includes(texto));
    renderizarCatalogo(filtradas);
 }
-
-
+ 
 function registrarPedido(){
    const cliente = inputCliente.value;
    const cantidad = parseInt(inputCantidad.value);
    const funda = catalogo.find(f => f.id == selectFunda.value);
-
+ 
    if(cliente != "" && cantidad > 0){
-
-      if(funda.stock >= cantidad){
-         const pedido = new Pedido(cliente, funda, cantidad, funda.precio * cantidad);
-         funda.stock = funda.stock - cantidad;
+      const { stock, precio } = funda;
+ 
+      if(stock >= cantidad){
+         const pedido = new Pedido(cliente, { ...funda }, cantidad, precio * cantidad);
+         funda.stock = stock - cantidad;
          pedidos.push(pedido);
-
+ 
+         guardarStorage();
          renderizarPedidos();
          filtrarCatalogo();
          mostrarMensaje("Pedido de " + cliente + " registrado", "exito");
-
+ 
          inputCliente.value = "";
          inputCantidad.value = 1;
       } else {
-         mostrarMensaje("Stock insuficiente (quedan " + funda.stock + ")", "error");
+         mostrarMensaje("Stock insuficiente (quedan " + stock + ")", "error");
       }
-
+ 
    } else {
       mostrarMensaje("Completá el cliente y una cantidad válida", "error");
    }
 }
-
+ 
 function cancelarPedido(posicion){
    const pedido = pedidos[posicion];
-
-   pedido.funda.stock = pedido.funda.stock + pedido.cantidad;
+   const { cliente, cantidad, funda: { id } } = pedido;
+ 
+   const fundaCatalogo = catalogo.find(f => f.id == id);
+   fundaCatalogo.stock = fundaCatalogo.stock + cantidad;
    pedidos.splice(posicion, 1);
-
+ 
+   guardarStorage();
    renderizarPedidos();
    filtrarCatalogo();
-   mostrarMensaje("Pedido de " + pedido.cliente + " cancelado", "exito");
+   mostrarMensaje("Pedido de " + cliente + " cancelado", "exito");
 }
-
-
+ 
+function vaciarPedidos(){
+   for(const { cantidad, funda: { id } } of pedidos){
+      const fundaCatalogo = catalogo.find(f => f.id == id);
+      fundaCatalogo.stock = fundaCatalogo.stock + cantidad;
+   }
+   pedidos.splice(0);
+ 
+   guardarStorage();
+   renderizarPedidos();
+   filtrarCatalogo();
+   mostrarMensaje("Se vaciaron todos los pedidos", "exito");
+}
+ 
 btnRegistrar.addEventListener("click", registrarPedido);
+btnVaciar.addEventListener("click", vaciarPedidos);
 buscador.addEventListener("keyup", filtrarCatalogo);
-
-
+ 
 cargarSelect();
 renderizarCatalogo(catalogo);
 renderizarPedidos();
