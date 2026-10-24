@@ -1,5 +1,5 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Courier New', Courier, monospace;
   background: rgb(238, 240, 247);
   color: rgb(34, 34, 34);
   max-width: 900px;
@@ -15,10 +15,10 @@ section {
   background: rgb(255, 255, 255);
   padding: 16px;
   margin-top: 16px;
-  border-radius: 6px;
+  border-radius: 2px;
 }
 
-input, select {
+input {
   padding: 8px;
   margin: 4px 4px 4px 0;
 }
@@ -28,7 +28,7 @@ input, select {
   color: rgb(255, 255, 255);
   border: none;
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: 2px;
   cursor: pointer;
 }
 
@@ -37,8 +37,8 @@ input, select {
 }
 
 .exito {
-  background: rgb(214, 245, 227);
-  color: rgb(27, 107, 63);
+  background: rgb(214, 245, 225);
+  color: rgb(27, 145, 78);
   padding: 8px;
   margin-top: 8px;
 }
@@ -54,7 +54,7 @@ input, select {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid rgb(204, 204, 204);
 }
 
 #contenedor-catalogo {
@@ -64,9 +64,13 @@ input, select {
   margin-top: 16px;
 }
 
+#btn-vaciar {
+  background: rgb(224, 82, 82);
+}
+
 .tarjeta {
   border: 2px solid rgb(29, 32, 51);
-  border-radius: 6px;
+  border-radius: 5px;
   padding: 12px;
   text-align: center;
 }

@@ -36,13 +36,11 @@ const catalogoInicial = [
  
 const catalogo = JSON.parse(localStorage.getItem("catalogo")) || catalogoInicial;
 const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
- 
 const inputCliente = document.getElementById("cliente");
-const selectFunda = document.getElementById("funda");
 const inputCantidad = document.getElementById("cantidad");
-const btnRegistrar = document.getElementById("btn-registrar");
 const btnVaciar = document.getElementById("btn-vaciar");
 const mensaje = document.getElementById("mensaje");
+const aviso = document.getElementById("aviso");
 const buscador = document.getElementById("buscador");
 const contenedorCatalogo = document.querySelector("#contenedor-catalogo");
 const contenedorPedidos = document.querySelector("#contenedor-pedidos");
@@ -57,14 +55,6 @@ function mostrarMensaje(texto, tipo){
    mensaje.className = tipo;
 }
  
-function cargarSelect(){
-   let html = "";
-   for(const { id, modelo, color, precio } of catalogo){
-      html += `<option value="${id}">${modelo} - ${color} ($${precio})</option>`;
-   }
-   selectFunda.innerHTML = html;
-}
- 
 function renderizarCatalogo(lista){
    let html = "";
    for(const { modelo, color, precio, stock } of lista){
@@ -74,10 +64,16 @@ function renderizarCatalogo(lista){
             <p>${color}</p>
             <p>$${precio}</p>
             <p>${stock > 0 ? "Stock: " + stock : "Sin stock"}</p>
+            <button class="btn btn-pedir">Comprar</button>
          </div>
       `;
    }
    contenedorCatalogo.innerHTML = html;
+
+   const botonesPedir = document.querySelectorAll(".btn-pedir");
+   for(let i = 0; i < botonesPedir.length; i++){
+      botonesPedir[i].addEventListener("click", () => registrarPedido(lista[i]));
+   }
 }
  
 function renderizarPedidos(){
@@ -91,6 +87,7 @@ function renderizarPedidos(){
          </div>
       `;
    }
+
    contenedorPedidos.innerHTML = pedidos.length === 0 ? "<p>No hay pedidos todavía</p>" : html;
  
    const botones = document.querySelectorAll(".btn-cancelar");
@@ -105,30 +102,29 @@ function filtrarCatalogo(){
    renderizarCatalogo(filtradas);
 }
  
-function registrarPedido(){
+function registrarPedido(funda){
    const cliente = inputCliente.value;
    const cantidad = parseInt(inputCantidad.value);
-   const funda = catalogo.find(f => f.id == selectFunda.value);
- 
-   if(cliente != "" && cantidad > 0){
+
+   if(funda && cliente != "" && cantidad > 0){
       const { stock, precio } = funda;
- 
+
       if(stock >= cantidad){
          const pedido = new Pedido(cliente, { ...funda }, cantidad, precio * cantidad);
          funda.stock = stock - cantidad;
          pedidos.push(pedido);
- 
+
          guardarStorage();
          renderizarPedidos();
          filtrarCatalogo();
          mostrarMensaje("Pedido de " + cliente + " registrado", "exito");
- 
+
          inputCliente.value = "";
          inputCantidad.value = 1;
       } else {
          mostrarMensaje("Stock insuficiente (quedan " + stock + ")", "error");
       }
- 
+
    } else {
       mostrarMensaje("Completá el cliente y una cantidad válida", "error");
    }
@@ -161,11 +157,40 @@ function vaciarPedidos(){
    mostrarMensaje("Se vaciaron todos los pedidos", "exito");
 }
  
-btnRegistrar.addEventListener("click", registrarPedido);
+function obtenerCatalogo(servidorDisponible){
+   return new Promise((resolve, reject) => {
+      setTimeout(() => {
+         if(servidorDisponible){
+            resolve(catalogo);
+         } else {
+            reject(new Error("Servidor caído"));
+         }
+      }, 2000);
+   });
+}
+ 
+async function cargarCatalogo(){
+   try {
+      mostrarMensaje("Cargando productos...", "exito");
+      const lista = await obtenerCatalogo(true); 
+      renderizarCatalogo(lista);
+      mostrarMensaje(lista.length + " productos cargados", "exito");
+   } catch (error) {
+      mostrarMensaje(" No se pudo cargar el catálogo, intentá de nuevo", "error");
+   } finally {
+      aviso.textContent = "Carga de productos finalizada";
+   }
+}
+ 
+setTimeout(() => {
+   aviso.textContent = "Recordatorio: revisá el stock antes de registrar un pedido";
+   aviso.className = "exito";
+}, 5000);
+ 
+
 btnVaciar.addEventListener("click", vaciarPedidos);
 buscador.addEventListener("keyup", filtrarCatalogo);
  
-cargarSelect();
-renderizarCatalogo(catalogo);
 renderizarPedidos();
+cargarCatalogo();
 
