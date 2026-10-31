@@ -32,10 +32,6 @@ input {
   cursor: pointer;
 }
 
-.btn-cancelar {
-  background: rgb(224, 82, 82);
-}
-
 .exito {
   background: rgb(214, 245, 225);
   color: rgb(27, 145, 78);
@@ -73,4 +69,25 @@ input {
   border-radius: 5px;
   padding: 12px;
   text-align: center;
+}
+
+.oculto {
+  display: none;
+}
+
+.controles {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#total-carrito {
+  font-weight: bold;
+  margin-top: 12px;
+}
+
+.campo-checkout {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
 }

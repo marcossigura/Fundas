@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="CSS/style.css">
     <script src="js/main.js" defer></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-    
 </head>
 <body>
 
@@ -15,22 +14,34 @@
     <div id="aviso"></div>
 
     <section>
-        <h2>Nuevo pedido</h2>
-        <input type="text" id="cliente" placeholder="Nombre del cliente">
-        <input type="number" id="cantidad" value="1">
+        <h2>Catálogo</h2>
         <div id="mensaje"></div>
-    </section>
-
-    <section>
-        <h2>Pedidos</h2>
-        <div id="contenedor-pedidos"></div>
-        <button class="btn" id="btn-vaciar">Vaciar pedidos</button>
-    </section>
-
-    <section>
-        <h2>Catalogo</h2>
         <input type="text" id="buscador" placeholder="Buscá por modelo (ej: iPhone 13)">
         <div id="contenedor-catalogo"></div>
+    </section>
+
+    <section>
+        <h2>Carrito</h2>
+        <div id="contenedor-carrito"></div>
+        <p id="total-carrito"></p>
+        <button class="btn" id="btn-finalizar">Finalizar compra</button>
+        <button class="btn" id="btn-vaciar">Vaciar carrito</button>
+    </section>
+
+    <section id="seccion-checkout" class="oculto">
+        <h2>Datos del cliente</h2>
+        <input type="text" id="nombre" class="campo-checkout" placeholder="Nombre">
+        <input type="text" id="apellido" class="campo-checkout" placeholder="Apellido">
+        <input type="email" id="email" class="campo-checkout" placeholder="Email">
+        <input type="text" id="telefono" class="campo-checkout" placeholder="Teléfono">
+        <input type="text" id="direccion" class="campo-checkout" placeholder="Dirección">
+        <input type="text" id="ciudad" class="campo-checkout" placeholder="Ciudad">
+        <button class="btn" id="btn-confirmar">Confirmar compra</button>
+    </section>
+
+    <section id="seccion-resumen" class="oculto">
+        <h2>Compra finalizada</h2>
+        <div id="contenedor-resumen"></div>
     </section>
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>

@@ -1,8 +1,7 @@
 class Pedido {
-   constructor(cliente, funda, cantidad, total){
+   constructor(cliente, productos, total){
       this.cliente = cliente;
-      this.funda = funda;
-      this.cantidad = cantidad;
+      this.productos = productos;
       this.total = total;
    }
 }
@@ -10,18 +9,33 @@ class Pedido {
 const url = "./db/data.json";
 
 let catalogo = [];
-const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-const inputCliente = document.getElementById("cliente");
-const inputCantidad = document.getElementById("cantidad");
-const btnVaciar = document.getElementById("btn-vaciar");
+const carrito = JSON.parse(localStorage.getItem("carrito")) || [];
+const compras = JSON.parse(localStorage.getItem("compras")) || [];
+
 const mensaje = document.getElementById("mensaje");
 const aviso = document.getElementById("aviso");
 const buscador = document.getElementById("buscador");
 const contenedorCatalogo = document.querySelector("#contenedor-catalogo");
-const contenedorPedidos = document.querySelector("#contenedor-pedidos");
+const contenedorCarrito = document.querySelector("#contenedor-carrito");
+const totalCarrito = document.getElementById("total-carrito");
+const btnFinalizar = document.getElementById("btn-finalizar");
+const btnVaciar = document.getElementById("btn-vaciar");
+const btnConfirmar = document.getElementById("btn-confirmar");
+const seccionCheckout = document.getElementById("seccion-checkout");
+const seccionResumen = document.getElementById("seccion-resumen");
+const contenedorResumen = document.getElementById("contenedor-resumen");
+
+const camposCheckout = document.querySelectorAll(".campo-checkout");
+const inputNombre = document.getElementById("nombre");
+const inputApellido = document.getElementById("apellido");
+const inputEmail = document.getElementById("email");
+const inputTelefono = document.getElementById("telefono");
+const inputDireccion = document.getElementById("direccion");
+const inputCiudad = document.getElementById("ciudad");
 
 function guardarStorage(){
-   localStorage.setItem("pedidos", JSON.stringify(pedidos));
+   localStorage.setItem("carrito", JSON.stringify(carrito));
+   localStorage.setItem("compras", JSON.stringify(compras));
 }
 
 function notificar(texto, tipo){
@@ -39,106 +53,211 @@ function notificar(texto, tipo){
    }).showToast();
 }
 
-function renderizarCatalogo(lista){
+function calcularTotal(){
+   let total = 0;
+   carrito.forEach(({ precio, cantidad }) => {
+      total = total + precio * cantidad;
+   });
+   return total;
+}
+
+function descontarStock(productos){
+   productos.forEach(({ id, cantidad }) => {
+      const fundaCatalogo = catalogo.find(funda => funda.id === id);
+      fundaCatalogo.stock = fundaCatalogo.stock - cantidad;
+   });
+}
+
+function renderizarCatalogo(listaFundas){
    let html = "";
-   for(const { modelo, color, precio, stock } of lista){
+   listaFundas.forEach(({ modelo, color, precio, stock }) => {
       html += `
          <div class="tarjeta">
             <h3>${modelo}</h3>
             <p>${color}</p>
             <p>$${precio}</p>
             <p>${stock > 0 ? "Stock: " + stock : "Sin stock"}</p>
-            <button class="btn btn-pedir">Comprar</button>
+            <button class="btn btn-comprar">Comprar</button>
          </div>
       `;
-   }
+   });
    contenedorCatalogo.innerHTML = html;
 
-   const botonesPedir = document.querySelectorAll(".btn-pedir");
-   for(let i = 0; i < botonesPedir.length; i++){
-      botonesPedir[i].addEventListener("click", () => registrarPedido(lista[i]));
-   }
+   const botonesComprar = document.querySelectorAll(".btn-comprar");
+   botonesComprar.forEach((botonComprar, posicion) => {
+      botonComprar.addEventListener("click", () => agregarAlCarrito(listaFundas[posicion]));
+   });
 }
 
-function renderizarPedidos(){
+function renderizarCarrito(){
    let html = "";
-   for(const { cliente, cantidad, funda, total } of pedidos){
-      const { modelo, color } = funda;
+   carrito.forEach(({ modelo, color, precio, cantidad }) => {
       html += `
          <div class="pedido">
-            <p>${cliente}: ${cantidad} x ${modelo} (${color}) = $${total}</p>
-            <button class="btn btn-cancelar">Cancelar</button>
+            <p>${modelo} (${color}) - $${precio} x ${cantidad} = $${precio * cantidad}</p>
+            <div class="controles">
+               <button class="btn btn-restar">-</button>
+               <span>${cantidad}</span>
+               <button class="btn btn-sumar">+</button>
+            </div>
          </div>
       `;
-   }
+   });
 
-   contenedorPedidos.innerHTML = pedidos.length === 0 ? "<p>No hay pedidos todavía</p>" : html;
+   contenedorCarrito.innerHTML = carrito.length === 0 ? "<p>El carrito está vacío</p>" : html;
+   totalCarrito.textContent = "Total: $" + calcularTotal();
 
-   const botones = document.querySelectorAll(".btn-cancelar");
-   for(let i = 0; i < botones.length; i++){
-      botones[i].addEventListener("click", () => cancelarPedido(i));
-   }
+   const botonesRestar = document.querySelectorAll(".btn-restar");
+   botonesRestar.forEach((botonRestar, posicion) => {
+      botonRestar.addEventListener("click", () => restarCantidad(posicion));
+   });
+
+   const botonesSumar = document.querySelectorAll(".btn-sumar");
+   botonesSumar.forEach((botonSumar, posicion) => {
+      botonSumar.addEventListener("click", () => sumarCantidad(posicion));
+   });
 }
 
 function filtrarCatalogo(){
    const texto = buscador.value.toLowerCase();
-   const filtradas = catalogo.filter(({ modelo }) => modelo.toLowerCase().includes(texto));
-   renderizarCatalogo(filtradas);
+   const fundasFiltradas = catalogo.filter(({ modelo }) => modelo.toLowerCase().includes(texto));
+   renderizarCatalogo(fundasFiltradas);
 }
 
-function registrarPedido(funda){
-   const cliente = inputCliente.value;
-   const cantidad = parseInt(inputCantidad.value);
+function agregarAlCarrito(funda){
+   const { id, modelo, color, precio, stock } = funda;
+   const itemCarrito = carrito.find(item => item.id === id);
 
-   if(funda && cliente != "" && cantidad > 0){
-      const { stock, precio } = funda;
-
-      if(stock >= cantidad){
-         const pedido = new Pedido(cliente, { ...funda }, cantidad, precio * cantidad);
-         funda.stock = stock - cantidad;
-         pedidos.push(pedido);
-
-         guardarStorage();
-         renderizarPedidos();
-         filtrarCatalogo();
-         notificar("Pedido de " + cliente + " registrado", "exito");
-
-         inputCliente.value = "";
-         inputCantidad.value = 1;
-      } else {
-         notificar("Stock insuficiente (quedan " + stock + ")", "error");
+   if(itemCarrito){
+      if(itemCarrito.cantidad >= stock){
+         notificar("No hay más stock de " + modelo + " (" + color + ")", "error");
+         return;
       }
-
+      itemCarrito.cantidad = itemCarrito.cantidad + 1;
+   } else if(stock > 0){
+      carrito.push({ id, modelo, color, precio, cantidad: 1 });
    } else {
-      notificar("Completá el cliente y una cantidad válida", "error");
+      notificar("Sin stock de " + modelo + " (" + color + ")", "error");
+      return;
+   }
+
+   guardarStorage();
+   renderizarCarrito();
+   notificar(modelo + " (" + color + ") agregada al carrito", "exito");
+}
+
+function sumarCantidad(posicion){
+   const itemCarrito = carrito[posicion];
+   const fundaCatalogo = catalogo.find(funda => funda.id === itemCarrito.id);
+
+   if(fundaCatalogo && itemCarrito.cantidad < fundaCatalogo.stock){
+      itemCarrito.cantidad = itemCarrito.cantidad + 1;
+      guardarStorage();
+      renderizarCarrito();
+   } else {
+      notificar("No hay más stock disponible", "error");
    }
 }
 
-function cancelarPedido(posicion){
-   const pedido = pedidos[posicion];
-   const { cliente, cantidad, funda: { id } } = pedido;
+function restarCantidad(posicion){
+   const itemCarrito = carrito[posicion];
+   itemCarrito.cantidad = itemCarrito.cantidad - 1;
 
-   const fundaCatalogo = catalogo.find(f => f.id == id);
-   fundaCatalogo.stock = fundaCatalogo.stock + cantidad;
-   pedidos.splice(posicion, 1);
+   if(itemCarrito.cantidad === 0){
+      carrito.splice(posicion, 1);
+      notificar(itemCarrito.modelo + " (" + itemCarrito.color + ") quitada del carrito", "exito");
+   }
 
    guardarStorage();
-   renderizarPedidos();
-   filtrarCatalogo();
-   notificar("Pedido de " + cliente + " cancelado", "exito");
+   renderizarCarrito();
 }
 
-function vaciarPedidos(){
-   for(const { cantidad, funda: { id } } of pedidos){
-      const fundaCatalogo = catalogo.find(f => f.id == id);
-      fundaCatalogo.stock = fundaCatalogo.stock + cantidad;
+function vaciarCarrito(){
+   if(carrito.length === 0){
+      notificar("El carrito ya está vacío", "error");
+      return;
    }
-   pedidos.splice(0);
+
+   carrito.splice(0);
+   seccionCheckout.className = "oculto";
 
    guardarStorage();
-   renderizarPedidos();
+   renderizarCarrito();
+   notificar("Se vació el carrito", "exito");
+}
+
+function mostrarCheckout(){
+   if(carrito.length === 0){
+      notificar("Agregá productos al carrito antes de finalizar la compra", "error");
+      return;
+   }
+
+   seccionResumen.className = "oculto";
+   seccionCheckout.className = "";
+}
+
+function renderizarResumen(compra){
+   const { cliente, productos, total } = compra;
+
+   let detalle = "";
+   productos.forEach(({ modelo, color, precio, cantidad }) => {
+      detalle += `<p>${cantidad} x ${modelo} (${color}) = $${precio * cantidad}</p>`;
+   });
+
+   contenedorResumen.innerHTML = `
+      <p>¡Gracias por tu compra, ${cliente.nombre} ${cliente.apellido}!</p>
+      ${detalle}
+      <p>Total: $${total}</p>
+      <p>Envío a: ${cliente.direccion}, ${cliente.ciudad}</p>
+      <p>Te enviamos la confirmación a ${cliente.email}</p>
+   `;
+   seccionResumen.className = "";
+}
+
+function confirmarCompra(){
+   let datosCompletos = true;
+   camposCheckout.forEach(campo => {
+      if(campo.value == ""){
+         datosCompletos = false;
+      }
+   });
+
+   if(!datosCompletos){
+      notificar("Completá todos los datos del cliente", "error");
+      return;
+   }
+
+   if(!inputEmail.value.includes("@")){
+      notificar("Ingresá un email válido", "error");
+      return;
+   }
+
+   const cliente = {
+      nombre: inputNombre.value,
+      apellido: inputApellido.value,
+      email: inputEmail.value,
+      telefono: inputTelefono.value,
+      direccion: inputDireccion.value,
+      ciudad: inputCiudad.value
+   };
+   const compra = new Pedido(cliente, [...carrito], calcularTotal());
+
+   renderizarResumen(compra);
+
+   compras.push(compra);
+   descontarStock(compra.productos);
+
+   carrito.splice(0);
+   guardarStorage();
+   renderizarCarrito();
    filtrarCatalogo();
-   notificar("Se vaciaron todos los pedidos", "exito");
+
+   camposCheckout.forEach(campo => {
+      campo.value = "";
+   });
+   seccionCheckout.className = "oculto";
+
+   notificar("¡Compra realizada con éxito!", "exito");
 }
 
 async function cargarCatalogo(){
@@ -149,12 +268,12 @@ async function cargarCatalogo(){
       if(!response.ok){
          throw new Error("Error en la petición: " + response.status);
       }
-      catalogo = await response.json();
 
-      for(const { cantidad, funda } of pedidos){
-         const fundaCatalogo = catalogo.find(f => f.id == funda.id);
-         fundaCatalogo.stock = fundaCatalogo.stock - cantidad;
-      }
+      catalogo = await response.json();
+      
+      compras.forEach(compra => {
+         descontarStock(compra.productos);
+      });
 
       renderizarCatalogo(catalogo);
       notificar(catalogo.length + " productos cargados con éxito", "exito");
@@ -168,13 +287,15 @@ async function cargarCatalogo(){
 }
 
 setTimeout(() => {
-   aviso.textContent = "Recordatorio: revisá el stock antes de registrar un pedido";
+   aviso.textContent = "Recordatorio: revisá el stock antes de comprar";
    aviso.className = "exito";
 }, 5000);
 
-btnVaciar.addEventListener("click", vaciarPedidos);
+btnFinalizar.addEventListener("click", mostrarCheckout);
+btnVaciar.addEventListener("click", vaciarCarrito);
+btnConfirmar.addEventListener("click", confirmarCompra);
 buscador.addEventListener("keyup", filtrarCatalogo);
 
-renderizarPedidos();
+renderizarCarrito();
 cargarCatalogo();
 
