@@ -9,8 +9,6 @@ class Pedido {
 const url = "./db/data.json";
 
 let catalogo = [];
-const carrito = JSON.parse(localStorage.getItem("carrito")) || [];
-const compras = JSON.parse(localStorage.getItem("compras")) || [];
 
 const mensaje = document.getElementById("mensaje");
 const aviso = document.getElementById("aviso");
@@ -32,11 +30,6 @@ const inputEmail = document.getElementById("email");
 const inputTelefono = document.getElementById("telefono");
 const inputDireccion = document.getElementById("direccion");
 const inputCiudad = document.getElementById("ciudad");
-
-function guardarStorage(){
-   localStorage.setItem("carrito", JSON.stringify(carrito));
-   localStorage.setItem("compras", JSON.stringify(compras));
-}
 
 function notificar(texto, tipo){
    Toastify({
@@ -69,53 +62,60 @@ function descontarStock(productos){
 }
 
 function renderizarCatalogo(listaFundas){
-   let html = "";
-   listaFundas.forEach(({ modelo, color, precio, stock }) => {
-      html += `
-         <div class="tarjeta">
-            <h3>${modelo}</h3>
-            <p>${color}</p>
-            <p>$${precio}</p>
-            <p>${stock > 0 ? "Stock: " + stock : "Sin stock"}</p>
-            <button class="btn btn-comprar">Comprar</button>
-         </div>
-      `;
-   });
-   contenedorCatalogo.innerHTML = html;
+   contenedorCatalogo.innerHTML = "";
 
-   const botonesComprar = document.querySelectorAll(".btn-comprar");
-   botonesComprar.forEach((botonComprar, posicion) => {
-      botonComprar.addEventListener("click", () => agregarAlCarrito(listaFundas[posicion]));
+   listaFundas.forEach(funda => {
+      const { modelo, color, precio, stock, imagen } = funda;
+
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjeta";
+      tarjeta.innerHTML = `
+         <img src="${imagen}" alt="Funda ${modelo} ${color}">
+         <h3>${modelo}</h3>
+         <p>${color}</p>
+         <p>$${precio}</p>
+         <p>${stock > 0 ? "Stock: " + stock : "Sin stock"}</p>
+         <button class="btn btn-comprar">Comprar</button>
+      `;
+
+      const botonComprar = tarjeta.querySelector(".btn-comprar");
+      botonComprar.addEventListener("click", () => agregarAlCarrito(funda));
+
+      contenedorCatalogo.appendChild(tarjeta);
    });
 }
 
 function renderizarCarrito(){
-   let html = "";
-   carrito.forEach(({ modelo, color, precio, cantidad }) => {
-      html += `
-         <div class="pedido">
-            <p>${modelo} (${color}) - $${precio} x ${cantidad} = $${precio * cantidad}</p>
-            <div class="controles">
-               <button class="btn btn-restar">-</button>
-               <span>${cantidad}</span>
-               <button class="btn btn-sumar">+</button>
-            </div>
+   contenedorCarrito.innerHTML = "";
+
+   if(carrito.length === 0){
+      contenedorCarrito.innerHTML = "<p>El carrito está vacío</p>";
+   }
+
+   carrito.forEach((itemCarrito, posicion) => {
+      const { modelo, color, precio, cantidad } = itemCarrito;
+
+      const filaCarrito = document.createElement("div");
+      filaCarrito.className = "pedido";
+      filaCarrito.innerHTML = `
+         <p>${modelo} (${color}) - $${precio} x ${cantidad} = $${precio * cantidad}</p>
+         <div class="controles">
+            <button class="btn btn-restar">-</button>
+            <span>${cantidad}</span>
+            <button class="btn btn-sumar">+</button>
          </div>
       `;
-   });
 
-   contenedorCarrito.innerHTML = carrito.length === 0 ? "<p>El carrito está vacío</p>" : html;
-   totalCarrito.textContent = "Total: $" + calcularTotal();
-
-   const botonesRestar = document.querySelectorAll(".btn-restar");
-   botonesRestar.forEach((botonRestar, posicion) => {
+      const botonRestar = filaCarrito.querySelector(".btn-restar");
       botonRestar.addEventListener("click", () => restarCantidad(posicion));
+
+      const botonSumar = filaCarrito.querySelector(".btn-sumar");
+      botonSumar.addEventListener("click", () => sumarCantidad(posicion));
+
+      contenedorCarrito.appendChild(filaCarrito);
    });
 
-   const botonesSumar = document.querySelectorAll(".btn-sumar");
-   botonesSumar.forEach((botonSumar, posicion) => {
-      botonSumar.addEventListener("click", () => sumarCantidad(posicion));
-   });
+   totalCarrito.textContent = "Total: $" + calcularTotal();
 }
 
 function filtrarCatalogo(){
@@ -199,22 +199,32 @@ function mostrarCheckout(){
 function renderizarResumen(compra){
    const { cliente, productos, total } = compra;
 
-   let detalle = "";
+   contenedorResumen.innerHTML = `<p>¡Gracias por tu compra, ${cliente.nombre} ${cliente.apellido}!</p>`;
+
    productos.forEach(({ modelo, color, precio, cantidad }) => {
-      detalle += `<p>${cantidad} x ${modelo} (${color}) = $${precio * cantidad}</p>`;
+      const detalle = document.createElement("p");
+      detalle.textContent = `${cantidad} x ${modelo} (${color}) = $${precio * cantidad}`;
+      contenedorResumen.appendChild(detalle);
    });
 
-   contenedorResumen.innerHTML = `
-      <p>¡Gracias por tu compra, ${cliente.nombre} ${cliente.apellido}!</p>
-      ${detalle}
+   const datosFinales = document.createElement("div");
+   datosFinales.innerHTML = `
       <p>Total: $${total}</p>
       <p>Envío a: ${cliente.direccion}, ${cliente.ciudad}</p>
       <p>Te enviamos la confirmación a ${cliente.email}</p>
    `;
+   contenedorResumen.appendChild(datosFinales);
+
    seccionResumen.className = "";
 }
 
 function confirmarCompra(){
+
+   if(carrito.length === 0){
+      notificar("El carrito está vacío", "error");
+      return;
+   }
+
    let datosCompletos = true;
    camposCheckout.forEach(campo => {
       if(campo.value == ""){
@@ -278,7 +288,6 @@ async function cargarCatalogo(){
       renderizarCatalogo(catalogo);
       notificar(catalogo.length + " productos cargados con éxito", "exito");
    } catch (error) {
-      console.error("Hubo un problema:", error.message);
       notificar("No se pudo cargar el catálogo", "error");
    } finally {
       mensaje.textContent = "";
@@ -298,4 +307,3 @@ buscador.addEventListener("keyup", filtrarCatalogo);
 
 renderizarCarrito();
 cargarCatalogo();
-
