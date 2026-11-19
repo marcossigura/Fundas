@@ -47,3 +47,8 @@ Almacenamiento
 Se utiliza LocalStorage para guardar:
 - El carrito de compras.
 - El historial de compras.
+  
+El proyecto se encuentra publicado en GitHub Pages y se puede visualizar desde el siguiente enlace:
+
+https://marcossigura.github.io/Fundas/
+
